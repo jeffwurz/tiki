@@ -56,16 +56,16 @@ void setup()  {
   TinyWireM.endTransmission();
   delay(50);
   
-  setup_watchdog(5);
+  setup_watchdog(7);
   // 0=16ms, 1=32ms,2=64ms,3=128ms,4=250ms,5=500ms
   // 6=1 sec,7=2 sec, 8=4 sec, 9= 8sec
   //
   // read eeprom for previous mode.
   eeprom_read_block((void*)&settings, (void*)0, sizeof(settings));
   // change set to opposite
-  if      (settings.set == 0){settings.set = 1; flash2i2c(255,0);}
-  else if (settings.set == 1){settings.set = 0; flash2i2c(0,255);}
-  else                       {settings.set = 1; flash2i2c(255,0);}
+  if      (settings.set == 0){settings.set = 1; write2bothi2c(255,0);write2bothi2c(0,0);}
+  else if (settings.set == 1){settings.set = 0; write2bothi2c(0,255);write2bothi2c(0,0);}
+  else                       {settings.set = 1; write2bothi2c(255,0);write2bothi2c(0,0);}
   // read last mode from previous run.
   eeprom_write_block((const void*)&settings, (void*)0, sizeof(settings));
   // flash the state of set
@@ -76,24 +76,24 @@ void loop()
 {
   mode = settings.mode;
   set = settings.set;
-  if      (mode == 0) {setup_watchdog(1); tiki();         }
-  else if (mode == 1) {setup_watchdog(4); flip_flop(0);  }
-  else if (mode == 2) {setup_watchdog(4); flip_flop(1);  }
-  else if (mode == 3) {setup_watchdog(4); tic_toc();     }
-  else if (mode == 4) {setup_watchdog(3); sweep();       }
-  else if (mode == 5) {setup_watchdog(2); binary_count();}
-  else if (mode == 6) {setup_watchdog(2); knight_rider();}
-  else if (mode == 7) {setup_watchdog(4); grey_counter();}
-  else if (mode == 8) {setup_watchdog(3); rand_flash();  }
-  else if (mode == 9) {setup_watchdog(3); rand_on();     }
-  else if (mode == 10){setup_watchdog(3); loop_roof();   }
+  if      (mode == 0) {setup_watchdog(1); tiki();        }
+  else if (mode == 1) {setup_watchdog(2); knight_tiki(); }
+  else if (mode == 2) {setup_watchdog(2); loop_tiki();   }
+  else if (mode == 3) {setup_watchdog(4); flip_flop(0);  }
+  else if (mode == 4) {setup_watchdog(4); flip_flop(1);  }
+  else if (mode == 5) {setup_watchdog(4); tic_toc();     }
+  else if (mode == 6) {setup_watchdog(3); sweep();       }
+  else if (mode == 7) {setup_watchdog(2); binary_count();}
+  else if (mode == 8) {setup_watchdog(3); grey_counter();}
+  else if (mode == 9) {setup_watchdog(3); rand_flash();  }
+  else if (mode == 10){setup_watchdog(3); rand_on();     }
   else if (mode == 11){setup_watchdog(4); flash_all();   }
   else if (mode == 12){setup_watchdog(7); all_on();      }
-
+  clear_all();
   if(settings.set == 1)
   {     
     mode++;
-    if(mode == 1){mode = 0;}
+    if(mode == 12){mode = 0;}
     settings.mode = mode;
     eeprom_write_block((const void*)&settings, (void*)0, sizeof(settings));
   }
@@ -108,11 +108,17 @@ ISR(TIMER1_OVF_vect) {
   bitClear(PORTB, 3);
 }
 
+void clear_all()
+{
+  write_no_sleep_a_i2c(0);
+  write_no_sleep_b_i2c(0);
+}
+
 void tiki()
 {
   int fire[9] = {16,48,112,240,0,8,12,14,15};// {15,7,3,1,31,63,127,255,16,32,64,128,8,4,2,1};
   write2bothi2c(0,255); //make eyes glow ,  mouth off
-  for(int a = 0; a < 20; a++)
+  for(int a = 0; a < 80; a++)
   {
     int r2 = random(0,4);
     int r1 = random(4,8);
@@ -122,7 +128,7 @@ void tiki()
     //write_no_sleep_b_i2c(0);
   }
 }
-void loop_roof()
+void loop_tiki()
 {
   for(int a = 0; a < 10; a++)
   {
@@ -187,7 +193,7 @@ void grey_counter()
   }
 }
 
-void knight_rider()
+void knight_tiki()
 {
   for (int a = 1; a < 8; a++)
   {
@@ -208,23 +214,6 @@ void knight_rider()
     write_b_i2c(1);
     write_no_sleep_b_i2c(0);
   }
-    write_no_sleep_b_i2c(0);
-    write_a_i2c(1);
-    write_a_i2c(2);
-    write_a_i2c(4);
-    write_a_i2c(8);
-    write_a_i2c(16);
-    write_a_i2c(32);
-    write_a_i2c(64);
-    write_a_i2c(128);
-    write_a_i2c(64);
-    write_a_i2c(32);
-    write_a_i2c(16);
-    write_a_i2c(8);
-    write_a_i2c(4);
-    write_a_i2c(2);
-    write_a_i2c(1);
-    write_no_sleep_a_i2c(0);
 }
 
 void flash_all()
